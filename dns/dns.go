@@ -153,7 +153,7 @@ func (d *DNS) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	m.RecursionAvailable = true
 	m.Answer = rr
 	if err := w.WriteMsg(m); err != nil {
-		serveFailure(err, w, req)
+		d.serveFailure(err, w, req)
 		return
 	}
 }
