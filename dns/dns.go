@@ -17,6 +17,7 @@ type DNS struct {
 	AccountName string
 	TTL         uint32
 	NameServer  string
+	FakeMX      string
 	Logger      *log.Logger
 	accounts    *accounts.Accounts
 }
@@ -49,6 +50,16 @@ func (d *DNS) serveFailure(err error, w dns.ResponseWriter, req *dns.Msg) {
 	w.WriteMsg(ret)
 }
 
+func (d *DNS) poisoning(r *dns.Msg) {
+	for _, v := range r.Answer {
+		if d.FakeMX != "" {
+			if mx, ok := v.(*dns.MX); ok {
+				mx.Mx = d.FakeMX
+			}
+		}
+	}
+}
+
 // forward は予め指定されていたネームサーバーに req をリクエストし、そのレスポンスをそのまま返送する。
 func (d *DNS) forward(w dns.ResponseWriter, req *dns.Msg) {
 	network := "udp"
@@ -60,6 +71,7 @@ func (d *DNS) forward(w dns.ResponseWriter, req *dns.Msg) {
 	for i := 0; i < 3; i++ {
 		r, _, err := c.Exchange(req, d.NameServer)
 		if err == nil {
+			d.poisoning(r)
 			w.WriteMsg(r)
 			return
 		}

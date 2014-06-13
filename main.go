@@ -56,6 +56,8 @@
 //      使用するためには -account でアカウント名を適切に渡す必要がある。
 //  -ns="8.8.8.8:53"
 //      DNS サーバが自分自身で解決できなかったリクエストを転送する先のネームサーバー。
+//  -fakemx=""
+//      -ns で指定されたサーバーからの応答を返す前に MX レコードの内容を書き換える場合に指定する。
 package main
 
 import (
@@ -84,6 +86,7 @@ func main() {
 		socksService  = flag.String("socks", "", "SOCKSv5 service address (e.g., ':1080')")
 		dnsService    = flag.String("dns", "", "DNS service address (e.g., ':53')")
 		nameServer    = flag.String("ns", "8.8.8.8:53", "secondary name server (e.g., '8.8.8.8:53')")
+		fakeMX        = flag.String("fakemx", "", "enable mx record poisoning(e.g., 'localhost.localdomain.')")
 	)
 
 	flag.Parse()
@@ -148,6 +151,7 @@ func main() {
 				s := dns.New(ac)
 				s.AccountName = *account
 				s.NameServer = *nameServer
+				s.FakeMX = *fakeMX
 				if err := s.ListenAndServe(*dnsService); err != nil {
 					log.Println("ListenAndServe(DNS):", err)
 				}
